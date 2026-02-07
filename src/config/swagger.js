@@ -13,7 +13,16 @@ const options = {
       {
         url: 'https://art-gallery-c18j.onrender.com'
       }
-    ]
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
+    }
   },
   apis: ['./src/routes/*.js']
 }
