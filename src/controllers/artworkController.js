@@ -1,92 +1,107 @@
-const Artwork = require('../models/Artwork');
+const Artwork = require('../models/Artwork')
 
-exports.createArtwork = async (req, res, next) => {
+const createArtwork = async (req, res, next) => {
   try {
-    const { title, description, imageUrl, artist, year, price } = req.body;
+    const { title, description, artist, imageUrl, price } = req.body
 
     const artwork = await Artwork.create({
       title,
       description,
-      imageUrl,
       artist,
-      year,
+      imageUrl,
       price,
       createdBy: req.user._id
-    });
+    })
 
-    res.status(201).json(artwork);
+    res.status(201).json(artwork)
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
-exports.getArtworks = async (req, res, next) => {
+const getArtworks = async (req, res, next) => {
   try {
-    const artworks = await Artwork.find({ createdBy: req.user._id });
-    res.json(artworks);
+    const artworks = await Artwork.find({ createdBy: req.user._id })
+    res.json(artworks)
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
-exports.getArtworkById = async (req, res, next) => {
+const getArtworkById = async (req, res, next) => {
   try {
-    const artwork = await Artwork.findOne({
-      _id: req.params.id,
-      createdBy: req.user._id
-    });
+    const artwork = await Artwork.findById(req.params.id)
 
     if (!artwork) {
-      return res.status(404).json({ message: 'Artwork not found' });
+      res.status(404)
+      throw new Error('Artwork not found')
     }
 
-    res.json(artwork);
-  } catch (error) {
-    next(error);
-  }
-};
+    if (artwork.createdBy.toString() !== req.user._id.toString()) {
+      res.status(401)
+      throw new Error('Not authorized')
+    }
 
-exports.updateArtwork = async (req, res, next) => {
+    res.json(artwork)
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateArtwork = async (req, res, next) => {
   try {
-    const artwork = await Artwork.findOne({
-      _id: req.params.id,
-      createdBy: req.user._id
-    });
+    const artwork = await Artwork.findById(req.params.id)
 
     if (!artwork) {
-      return res.status(404).json({ message: 'Artwork not found' });
+      res.status(404)
+      throw new Error('Artwork not found')
     }
 
-    artwork.title = req.body.title || artwork.title;
-    artwork.description = req.body.description || artwork.description;
-    artwork.imageUrl = req.body.imageUrl || artwork.imageUrl;
-    artwork.artist = req.body.artist || artwork.artist;
-    artwork.year = req.body.year || artwork.year;
-    artwork.price = req.body.price || artwork.price;
+    if (artwork.createdBy.toString() !== req.user._id.toString()) {
+      res.status(401)
+      throw new Error('Not authorized')
+    }
 
-    const updatedArtwork = await artwork.save();
+    artwork.title = req.body.title || artwork.title
+    artwork.description = req.body.description || artwork.description
+    artwork.artist = req.body.artist || artwork.artist
+    artwork.imageUrl = req.body.imageUrl || artwork.imageUrl
+    artwork.price = req.body.price || artwork.price
 
-    res.json(updatedArtwork);
+    const updatedArtwork = await artwork.save()
+
+    res.json(updatedArtwork)
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
-exports.deleteArtwork = async (req, res, next) => {
+const deleteArtwork = async (req, res, next) => {
   try {
-    const artwork = await Artwork.findOne({
-      _id: req.params.id,
-      createdBy: req.user._id
-    });
+    const artwork = await Artwork.findById(req.params.id)
 
     if (!artwork) {
-      return res.status(404).json({ message: 'Artwork not found' });
+      res.status(404)
+      throw new Error('Artwork not found')
     }
 
-    await artwork.deleteOne();
+    if (artwork.createdBy.toString() !== req.user._id.toString()) {
+      res.status(401)
+      throw new Error('Not authorized')
+    }
 
-    res.json({ message: 'Artwork removed' });
+    await artwork.deleteOne()
+
+    res.json({ message: 'Artwork removed' })
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
+
+module.exports = {
+  createArtwork,
+  getArtworks,
+  getArtworkById,
+  updateArtwork,
+  deleteArtwork
+}

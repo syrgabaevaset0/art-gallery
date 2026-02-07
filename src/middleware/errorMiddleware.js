@@ -1,8 +1,9 @@
 const errorHandler = (err, req, res, next) => {
-  res.status(res.statusCode && res.statusCode !== 200 ? res.statusCode : 500);
-  res.json({
-    message: err.message || 'Server Error'
-  });
-};
+  const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500
 
-module.exports = errorHandler;
+  res.status(statusCode).json({
+    message: err.message || 'Server error'
+  })
+}
+
+module.exports = errorHandler

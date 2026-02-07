@@ -1,39 +1,30 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+const User = require('../models/User')
 
-exports.getProfile = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id);
+const getProfile = async (req, res) => {
+  res.json(req.user)
+}
 
-    res.json({
-      _id: user._id,
-      username: user.username,
-      email: user.email
-    });
-  } catch (error) {
-    next(error);
+const updateProfile = async (req, res) => {
+  const user = await User.findById(req.user._id)
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' })
   }
-};
 
-exports.updateProfile = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id);
+  user.username = req.body.username || user.username
+  user.email = req.body.email || user.email
 
-    user.username = req.body.username || user.username;
-    user.email = req.body.email || user.email;
+  const updatedUser = await user.save()
 
-    if (req.body.password) {
-      user.password = await bcrypt.hash(req.body.password, 10);
-    }
+  res.json({
+    _id: updatedUser._id,
+    username: updatedUser.username,
+    email: updatedUser.email,
+    role: updatedUser.role
+  })
+}
 
-    const updatedUser = await user.save();
-
-    res.json({
-      _id: updatedUser._id,
-      username: updatedUser.username,
-      email: updatedUser.email
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+module.exports = {
+  getProfile,
+  updateProfile
+}
