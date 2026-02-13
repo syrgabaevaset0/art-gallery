@@ -1,101 +1,93 @@
 const Artwork = require('../models/Artwork')
 
-const createArtwork = async (req, res, next) => {
-  try {
-    const { title, description, artist, imageUrl, price } = req.body
+const createArtwork = async (req, res) => {
+  const { title, description, artist, imageUrl, price } = req.body
 
-    const artwork = await Artwork.create({
-      title,
-      description,
-      artist,
-      imageUrl,
-      price,
-      createdBy: req.user._id
-    })
+  const artwork = await Artwork.create({
+    title,
+    description,
+    artist,
+    imageUrl,
+    price,
+    createdBy: req.user.id
+  })
 
-    res.status(201).json(artwork)
-  } catch (error) {
-    next(error)
-  }
+  res.status(201).json(artwork)
 }
 
-const getArtworks = async (req, res, next) => {
-  try {
-    const artworks = await Artwork.find({ createdBy: req.user._id })
-    res.json(artworks)
-  } catch (error) {
-    next(error)
-  }
+const getArtworks = async (req, res) => {
+  const artworks = await Artwork.find({ createdBy: req.user.id })
+  res.json(artworks)
 }
 
-const getArtworkById = async (req, res, next) => {
-  try {
-    const artwork = await Artwork.findById(req.params.id)
+const getArtworkById = async (req, res) => {
+  const artwork = await Artwork.findById(req.params.id)
 
-    if (!artwork) {
-      res.status(404)
-      throw new Error('Artwork not found')
-    }
-
-    if (artwork.createdBy.toString() !== req.user._id.toString()) {
-      res.status(401)
-      throw new Error('Not authorized')
-    }
-
-    res.json(artwork)
-  } catch (error) {
-    next(error)
+  if (!artwork) {
+    res.status(404)
+    throw new Error('Artwork not found')
   }
+
+  if (
+    artwork.createdBy.toString() !== req.user.id &&
+    req.user.role !== 'admin'
+  ) {
+    res.status(403)
+    throw new Error('Access denied')
+  }
+
+  res.json(artwork)
 }
 
-const updateArtwork = async (req, res, next) => {
-  try {
-    const artwork = await Artwork.findById(req.params.id)
+const updateArtwork = async (req, res) => {
+  const artwork = await Artwork.findById(req.params.id)
 
-    if (!artwork) {
-      res.status(404)
-      throw new Error('Artwork not found')
-    }
-
-    if (artwork.createdBy.toString() !== req.user._id.toString()) {
-      res.status(401)
-      throw new Error('Not authorized')
-    }
-
-    artwork.title = req.body.title || artwork.title
-    artwork.description = req.body.description || artwork.description
-    artwork.artist = req.body.artist || artwork.artist
-    artwork.imageUrl = req.body.imageUrl || artwork.imageUrl
-    artwork.price = req.body.price || artwork.price
-
-    const updatedArtwork = await artwork.save()
-
-    res.json(updatedArtwork)
-  } catch (error) {
-    next(error)
+  if (!artwork) {
+    res.status(404)
+    throw new Error('Artwork not found')
   }
+
+  if (
+    artwork.createdBy.toString() !== req.user.id &&
+    req.user.role !== 'admin'
+  ) {
+    res.status(403)
+    throw new Error('Access denied')
+  }
+
+  const updated = await Artwork.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  )
+
+  res.json(updated)
 }
 
-const deleteArtwork = async (req, res, next) => {
-  try {
-    const artwork = await Artwork.findById(req.params.id)
+const deleteArtwork = async (req, res) => {
+  const artwork = await Artwork.findById(req.params.id)
 
-    if (!artwork) {
-      res.status(404)
-      throw new Error('Artwork not found')
-    }
-
-    if (artwork.createdBy.toString() !== req.user._id.toString()) {
-      res.status(401)
-      throw new Error('Not authorized')
-    }
-
-    await artwork.deleteOne()
-
-    res.json({ message: 'Artwork removed' })
-  } catch (error) {
-    next(error)
+  if (!artwork) {
+    res.status(404)
+    throw new Error('Artwork not found')
   }
+
+  if (
+    artwork.createdBy.toString() !== req.user.id &&
+    req.user.role !== 'admin'
+  ) {
+    res.status(403)
+    throw new Error('Access denied')
+  }
+
+  await artwork.deleteOne()
+
+  res.json({ message: 'Artwork removed' })
+}
+
+const getAllArtworksAdmin = async (req, res) => {
+  const artworks = await Artwork.find().populate('createdBy', 'username email')
+  res.json(artworks)
 }
 
 module.exports = {
@@ -103,5 +95,6 @@ module.exports = {
   getArtworks,
   getArtworkById,
   updateArtwork,
-  deleteArtwork
+  deleteArtwork,
+  getAllArtworksAdmin
 }
